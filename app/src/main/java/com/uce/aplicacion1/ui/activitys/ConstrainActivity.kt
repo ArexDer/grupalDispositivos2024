@@ -6,6 +6,7 @@ import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -16,6 +17,7 @@ import com.uce.aplicacion1.databinding.ActivityConstrainBinding
 import com.uce.aplicacion1.logic.usercase.GetAllTopsNewUserCase
 import com.uce.aplicacion1.logic.usercase.GetOneTopNewUserCase
 import com.uce.aplicacion1.ui.adapters.NewsAdapter
+import com.uce.aplicacion1.ui.adapters.NewsDiffCallback
 import com.uce.aplicacion1.ui.entites.NewsDataUI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -53,23 +55,23 @@ class ConstrainActivity : AppCompatActivity() {
         //)
 
         binding.rvTopNews.layoutManager = CarouselLayoutManager()
-        val itemTouchHelperCallback = object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
-            override fun onMove(
-                recyclerView: RecyclerView,
-                viewHolder: RecyclerView.ViewHolder,
-                target: RecyclerView.ViewHolder
-            ): Boolean {
-                return false
-            }
-
-            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                val position = viewHolder.adapterPosition
-                deleteItem(position)
-            }
-        }
-
-        val itemTouchHelper = ItemTouchHelper(itemTouchHelperCallback)
-        itemTouchHelper.attachToRecyclerView(binding.rvTopNews)
+//        val itemTouchHelperCallback = object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
+//            override fun onMove(
+//                recyclerView: RecyclerView,
+//                viewHolder: RecyclerView.ViewHolder,
+//                target: RecyclerView.ViewHolder
+//            ): Boolean {
+//                return false
+//            }
+//
+//            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+//                val position = viewHolder.adapterPosition
+//                deleteItem(position)
+//            }
+//        }
+//
+//        val itemTouchHelper = ItemTouchHelper(itemTouchHelperCallback)
+//        itemTouchHelper.attachToRecyclerView(binding.rvTopNews)
     }
 
 
@@ -129,34 +131,66 @@ class ConstrainActivity : AppCompatActivity() {
 
          */
     }
-
     private fun deleteItem(position: Int){
         Toast.makeText(this, position.toString(), Toast.LENGTH_SHORT).show()
-        items.removeAt(position)
+        val newList = items.toMutableList().apply { removeAt(position) }
+        val diffCallback = NewsDiffCallback(items, newList)
+        val diffResult = DiffUtil.calculateDiff(diffCallback)
+
+        items = newList
         newsAdapter.listItems = items
-        newsAdapter.notifyItemRemoved(position)
+        diffResult.dispatchUpdatesTo(newsAdapter)
     }
+
+//    private fun deleteItem(position: Int){
+//        Toast.makeText(this, position.toString(), Toast.LENGTH_SHORT).show()
+//        items.removeAt(position)
+//        newsAdapter.listItems = items
+//        newsAdapter.notifyItemRemoved(position)
+//    }
 
 
 
     private fun addItem(){
         binding.pgbarLoadData.visibility = View.VISIBLE
-        lifecycleScope.launch( Dispatchers.IO){
+        lifecycleScope.launch(Dispatchers.IO){
             val addNew = GetOneTopNewUserCase().invoke()
             withContext(Dispatchers.Main){
                 binding.pgbarLoadData.visibility = View.INVISIBLE
-                addNew.onSuccess {
-                    items.add(it)
-                    newsAdapter.listItems=items
-                    newsAdapter.notifyItemInserted(items.size-1)
+                addNew.onSuccess { newItem ->
+                    val newList = items.toMutableList().apply { add(newItem) }
+                    val diffCallback = NewsDiffCallback(items, newList)
+                    val diffResult = DiffUtil.calculateDiff(diffCallback)
+
+                    items = newList
+                    newsAdapter.listItems = items
+                    diffResult.dispatchUpdatesTo(newsAdapter)
                 }
                 addNew.onFailure {
-                    Snackbar.make(binding.refreshRV,it.message.toString(),Snackbar.LENGTH_LONG).show()
+                    Snackbar.make(binding.refreshRV, it.message.toString(), Snackbar.LENGTH_LONG).show()
                 }
             }
         }
-
-
     }
-
 }
+
+//    private fun addItem(){
+//        binding.pgbarLoadData.visibility = View.VISIBLE
+//        lifecycleScope.launch( Dispatchers.IO){
+//            val addNew = GetOneTopNewUserCase().invoke()
+//            withContext(Dispatchers.Main){
+//                binding.pgbarLoadData.visibility = View.INVISIBLE
+//                addNew.onSuccess {
+//                    items.add(it)
+//                    newsAdapter.listItems=items
+//                    newsAdapter.notifyItemInserted(items.size-1)
+//                }
+//                addNew.onFailure {
+//                    Snackbar.make(binding.refreshRV,it.message.toString(),Snackbar.LENGTH_LONG).show()
+//                }
+//            }
+//        }
+//
+//
+//    }
+

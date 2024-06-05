@@ -19,6 +19,7 @@ import com.uce.aplicacion1.logic.usercase.GetOneTopNewUserCase
 import com.uce.aplicacion1.ui.adapters.NewsAdapter
 import com.uce.aplicacion1.ui.adapters.NewsDiffCallback
 import com.uce.aplicacion1.ui.entites.NewsDataUI
+import com.uce.aplicacion1.ui.fragments.MenuBottomSheetFragment
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -35,6 +36,9 @@ class ConstrainActivity : AppCompatActivity() {
         setContentView(binding.root)
         binding.btnInsert.setOnClickListener {
             addItem()
+        }
+        binding.buttonOpenBottomSheet.setOnClickListener {
+            showMenuBottomSheet()
         }
 
         initVariables()
@@ -171,6 +175,10 @@ class ConstrainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+    private fun showMenuBottomSheet() {
+        val menuBottomSheetFragment = MenuBottomSheetFragment()
+        menuBottomSheetFragment.show(supportFragmentManager, menuBottomSheetFragment.tag)
     }
 }
 
